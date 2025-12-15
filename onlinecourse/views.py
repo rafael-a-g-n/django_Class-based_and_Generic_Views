@@ -42,14 +42,26 @@ from django.http import Http404
 
 
 # Note that we are subclassing CourseListView from base View class
-class CourseListView(View):
+# class CourseListView(View):
+#
+#     # Handles get request
+#     def get(self, request):
+#         context = {}
+#         course_list = Course.objects.order_by('-total_enrollment')[:10]
+#         context['course_list'] = course_list
+#         return render(request, 'onlinecourse/course_list.html', context)
 
-    # Handles get request
-    def get(self, request):
-        context = {}
-        course_list = Course.objects.order_by('-total_enrollment')[:10]
-        context['course_list'] = course_list
-        return render(request, 'onlinecourse/course_list.html', context)
+
+# Note that CourseListView is subclassing from generic.ListView instead of View
+# so that it can use attributes and override methods from ListView such as get_queryset()
+class CourseListView(generic.ListView):
+    template_name = 'onlinecourse/course_list.html'
+    context_object_name = 'course_list'
+
+    # Override get_queryset() to provide list of objects
+    def get_queryset(self):
+       courses = Course.objects.order_by('-total_enrollment')[:10]
+       return courses
 
 class EnrollView(View):
 
@@ -62,15 +74,21 @@ class EnrollView(View):
         course.save()
         return HttpResponseRedirect(reverse(viewname='onlinecourse:course_details', args=(course.id,)))
 
-class CourseDetailsView(View):
+# class CourseDetailsView(View):
+#
+#     # Handles get request
+#     def get(self, request, *args, **kwargs):
+#         course_id = kwargs.get('pk')
+#         context = {}
+#         try:
+#             course = Course.objects.get(pk=course_id)
+#             context['course'] = course
+#             return render(request, 'onlinecourse/course_detail.html', context)
+#         except Course.DoesNotExist:
+#             raise Http404("No course matches the given id.")
 
-    # Handles get request
-    def get(self, request, *args, **kwargs):
-        course_id = kwargs.get('pk')
-        context = {}
-        try:
-            course = Course.objects.get(pk=course_id)
-            context['course'] = course
-            return render(request, 'onlinecourse/course_detail.html', context)
-        except Course.DoesNotExist:
-            raise Http404("No course matches the given id.")
+
+# Note that CourseDetailsView is now subclassing DetailView
+class CourseDetailsView(generic.DetailView):
+    model = Course
+    template_name = 'onlinecourse/course_detail.html'
